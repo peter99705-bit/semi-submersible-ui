@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>半潛平台控制介面</title>
+    <style>
+        body { background: #111; color: #eee; font-family: sans-serif; text-align: center; padding: 20px; }
+        button { padding: 12px 20px; margin: 8px; font-size: 16px; background: #333; color: #fff; border: none; border-radius: 5px; cursor: pointer; }
+        .b2 { background: #056; }
+        .b3 { background: #622; }
+        .connect-btn { background: #0077cc; font-weight: bold; width: 80%; }
+        .status-box { background: #222; padding: 15px; border-radius: 8px; margin: 15px auto; width: 80%; max-width: 400px; }
+    </style>
+</head>
+<body>
+    <h2>半潛平台控制面板</h2>
+    
+    <button class="connect-btn" onclick="connectBLE()">連接 ESP32 藍牙</button>
+    
+    <div class="status-box">
+        <p>連線狀態: <span id="ble-status" style="color: #f55;">未連線</span></p>
+        <p>Pitch: <span id="pitch">0</span>° | Roll: <span id="roll">0</span>°</p>
+        <p>系統狀態: <b id="sys-status">等待連線</b></p>
+    </div>
+
+    <hr>
+    <button onclick="sendCommand('auto')">自動模式</button>
+    <button onclick="sendCommand('manual')" class="b3">手動模式</button><br>
+
+    <h3>手動控制</h3>
+    <button onclick="sendCommand('p1_on')" class="b2">柱1充氣</button><button onclick="sendCommand('v1_on')" class="b3">柱1放氣</button><br>
+    <button onclick="sendCommand('p2_on')" class="b2">柱2充氣</button><button onclick="sendCommand('v2_on')" class="b3">柱2放氣</button><br>
+    <button onclick="sendCommand('p3_on')" class="b2">柱3充氣</button><button onclick="sendCommand('v3_on')" class="b3">柱3放氣</button><br>
+    <button onclick="sendCommand('p4_on')" class="b2">柱4充氣</button><button onclick="sendCommand('v4_on')" class="b3">柱4放氣</button><br><br>
+    
+    <button onclick="sendCommand('all_off')" style="background:#900; width:80%;">全部關閉</button>
+
+    <script>
+        let bluetoothDevice;
+        let controlCharacteristic;
+
+        const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
+        const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a9";
+
+        async function connectBLE() {
+            try {
+                document.getElementById('sys-status').innerText = "正在搜尋藍牙裝置...";
+                bluetoothDevice = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [SERVICE_UUID] }]
+                });
+
+                const server = await bluetoothDevice.gatt.connect();
+                const service = await server.getPrimaryService(SERVICE_UUID);
+                controlCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
+
+                document.getElementById('ble-status').innerText = "已連線";
+                document.getElementById('ble-status').style.color = "#0ff";
+                document.getElementById('sys-status').innerText = "藍牙已就緒";
+
+                await controlCharacteristic.startNotifications();
+                controlCharacteristic.addEventListener('characteristicvaluechanged', handleNotifications);
+
+            } catch (error) {
+                console.error("藍牙連線失敗:", error);
+                document.getElementById('sys-status').innerText = "連線失敗";
+            }
+        }
+
+        function handleNotifications(event) {
+            const value = new TextDecoder().decode(event.target.value);
+            try {
+                const data = JSON.parse(value);
+                document.getElementById('pitch').innerText = data.pitch.toFixed(1);
+                document.getElementById('roll').innerText = data.roll.toFixed(1);
+                document.getElementById('sys-status').innerText = data.status;
+            } catch (e) {
+                console.log("解析資料錯誤", e);
+            }
+        }
+
+        async function sendCommand(action) {
+            if (!controlCharacteristic) {
+                alert("請先點擊上方按鈕連接 ESP32 藍牙！");
+                return;
+            }
+            const encoder = new TextEncoder();
+            try {
+                await controlCharacteristic.writeValue(encoder.encode(action));
+            } catch (error) {
+                console.error("傳送指令失敗:", error);
+            }
+        }
+    </script>
+</body>
+</html>
