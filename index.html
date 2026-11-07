@@ -2,137 +2,64 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AIOT 智慧半潛平台控制面板</title>
+    <title>AIOT 半潛平台控制</title>
     <style>
-        body { font-family: Arial, sans-serif; background: #f4f6f9; text-align: center; margin: 0; padding: 20px; }
-        .container { max-width: 650px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        button { padding: 10px 18px; font-size: 15px; cursor: pointer; border: none; border-radius: 6px; margin: 4px; transition: 0.2s; }
-        button:active { transform: scale(0.96); }
-        .btn-connect { background: #007bff; color: white; font-size: 16px; padding: 12px 24px; }
-        .btn-action { background: #28a745; color: white; }
+        body { font-family: Arial; text-align: center; padding: 30px; background: #f4f6f9; }
+        .box { background: white; padding: 20px; border-radius: 10px; max-width: 500px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        button { padding: 12px 20px; font-size: 16px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; }
+        .btn-con { background: #007bff; color: white; }
+        .btn-on { background: #28a745; color: white; }
         .btn-off { background: #6c757d; color: white; }
-        .btn-mode { background: #ffc107; color: #333; font-weight: bold; }
-        .btn-stop { background: #dc3545; color: white; width: 100%; margin-top: 15px; font-size: 18px; padding: 14px; }
-        .card { background: #f8f9fa; padding: 15px; border-radius: 8px; margin-top: 15px; text-align: left; border: 1px solid #e9ecef; }
-        .column-box { background: white; border: 1px solid #ddd; padding: 12px; margin: 10px 0; border-radius: 6px; }
-        .status-text { font-weight: bold; color: #dc3545; }
-        .connected { color: #28a745 !important; }
+        .btn-stop { background: #dc3545; color: white; width: 100%; margin-top: 15px; }
     </style>
 </head>
 <body>
+    <div class="box">
+        <h2>🌊 半潛平台控制面板</h2>
+        <button class="btn-con" onclick="connectBLE()">連接 ESP32 藍牙</button>
+        <p>狀態: <span id="status" style="color:red; font-weight:bold;">未連線</span></p>
 
-    <div class="container">
-        <h2>🌊 AIOT 智慧半潛平台控制面板</h2>
-        
-        <!-- 藍牙連線區 -->
-        <div>
-            <button id="connectBtn" class="btn-connect" onclick="connectBLE()">連接 ESP32 藍牙</button>
-            <p>藍牙連線狀態: <span id="status" class="status-text">未連線</span></p>
-        </div>
+        <hr>
+        <h3>立柱 1 控制</h3>
+        <button class="btn-on" onclick="send('1,pump,1')">打氣 ON</button>
+        <button class="btn-off" onclick="send('1,pump,0')">打氣 OFF</button><br>
+        <button class="btn-on" onclick="send('1,valve,1')">排氣 ON</button>
+        <button class="btn-off" onclick="send('1,valve,0')">排氣 OFF</button>
 
-        <!-- 系統模式切換 -->
-        <div class="card">
-            <h3>⚙️ 系統運行模式</h3>
-            <p>目前模式: <span id="modeVal" style="font-weight: bold; color: #007bff;">manual</span></p>
-            <button class="btn-mode" onclick="setMode('auto')">切換至 【自動平衡模式】</button>
-            <button class="btn-mode" onclick="setMode('manual')" style="background: #17a2b8; color: white;">切換至 【手動介入模式】</button>
-        </div>
-
-        <!-- 即時數據監控 -->
-        <div class="card">
-            <h3>📊 姿態與感測監控 (Rabboni IMU)</h3>
-            <p>俯仰角 (Pitch): <span id="pitchVal">--</span> °</p>
-            <p>滾轉角 (Roll): <span id="rollVal">--</span> °</p>
-            <p>Rabboni 連線狀態: <span id="rabboniStatus" style="font-weight: bold;">檢查中...</span></p>
-        </div>
-
-        <!-- 手動模式控制 -->
-        <div class="card">
-            <h3>🕹️ 獨立柱體手動控制 (手動模式下有效)</h3>
-            
-            <!-- 立柱 1 -->
-            <div class="column-box">
-                <b>立柱 1</b><br>
-                打氣機: 
-                <button class="btn-action" onclick="sendControl(1, 'pump', 1)">開啟 ON</button>
-                <button class="btn-off" onclick="sendControl(1, 'pump', 0)">關閉 OFF</button><br>
-                排氣閥: 
-                <button class="btn-action" onclick="sendControl(1, 'valve', 1)">開啟 ON</button>
-                <button class="btn-off" onclick="sendControl(1, 'valve', 0)">關閉 OFF</button>
-            </div>
-
-            <!-- 立柱 2 -->
-            <div class="column-box">
-                <b>立柱 2</b><br>
-                打氣機: 
-                <button class="btn-action" onclick="sendControl(2, 'pump', 1)">開啟 ON</button>
-                <button class="btn-off" onclick="sendControl(2, 'pump', 0)">關閉 OFF</button><br>
-                排氣閥: 
-                <button class="btn-action" onclick="sendControl(2, 'valve', 1)">開啟 ON</button>
-                <button class="btn-off" onclick="sendControl(2, 'valve', 0)">關閉 OFF</button>
-            </div>
-
-            <!-- 立柱 3 -->
-            <div class="column-box">
-                <b>立柱 3</b><br>
-                打氣機: 
-                <button class="btn-action" onclick="sendControl(3, 'pump', 1)">開啟 ON</button>
-                <button class="btn-off" onclick="sendControl(3, 'pump', 0)">關閉 OFF</button><br>
-                排氣閥: 
-                <button class="btn-action" onclick="sendControl(3, 'valve', 1)">開啟 ON</button>
-                <button class="btn-off" onclick="sendControl(3, 'valve', 0)">關閉 OFF</button>
-            </div>
-
-            <!-- 立柱 4 -->
-            <div class="column-box">
-                <b>立柱 4</b><br>
-                打氣機: 
-                <button class="btn-action" onclick="sendControl(4, 'pump', 1)">開啟 ON</button>
-                <button class="btn-off" onclick="sendControl(4, 'pump', 0)">關閉 OFF</button><br>
-                排氣閥: 
-                <button class="btn-action" onclick="sendControl(4, 'valve', 1)">開啟 ON</button>
-                <button class="btn-off" onclick="sendControl(4, 'valve', 0)">關閉 OFF</button>
-            </div>
-
-            <!-- 安全總開關 -->
-            <button class="btn-stop" onclick="emergencyStop()">⚠️ 緊急全部關閉 (All Stop)</button>
-        </div>
+        <button class="btn-stop" onclick="send('emergency_stop')">⚠️ 緊急全部關閉</button>
     </div>
 
     <script>
         const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
-        const CHAR_RX_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a6";
-        const CHAR_TX_UUID = "1b950702-f94f-438d-932d-92c90299fde2";
-
-        let bluetoothDevice = null;
-        let rxCharacteristic = null;
-        let txCharacteristic = null;
+        const CHAR_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a6";
+        let characteristic;
 
         async function connectBLE() {
             try {
-                console.log('🔍 正在搜尋藍牙裝置...');
-                bluetoothDevice = await navigator.bluetooth.requestDevice({
-                    filters: [{ name: 'SemiSubmersible-ESP32' }],
+                const device = await navigator.bluetooth.requestDevice({
+                    filters: [{ services: [SERVICE_UUID] }],
                     optionalServices: [SERVICE_UUID]
                 });
-
-                const server = await bluetoothDevice.gatt.connect();
+                const server = await device.gatt.connect();
                 const service = await server.getService(SERVICE_UUID);
-
-                rxCharacteristic = await service.getCharacteristic(CHAR_RX_UUID);
-                txCharacteristic = await service.getCharacteristic(CHAR_TX_UUID);
-
-                // 啟動 Notify 監聽 ESP32 傳回的純字串資料
-                await txCharacteristic.startNotifications();
-                txCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
-                    const value = event.target.value;
-                    const decoder = new TextDecoder('utf-8');
-                    const dataStr = decoder.decode(value); // 收到格式如: pitch:1.20,roll:0.50,mode:manual
-                    
-                    parseTelemetry(dataStr);
-                });
+                characteristic = await service.getCharacteristic(CHAR_UUID);
 
                 document.getElementById('status').innerText = "已連線";
-                document.getElementById('status').className = "status-text connected";
-                document.getElementById('connectBtn').
+                document.getElementById('status').style.color = "green";
+                alert("藍牙連線成功！");
+            } catch (error) {
+                alert("連線失敗: " + error);
+            }
+        }
+
+        async function send(cmd) {
+            if (!characteristic) {
+                alert("請先連線藍牙！");
+                return;
+            }
+            const encoder = new TextEncoder();
+            await characteristic.writeValue(encoder.encode(cmd));
+        }
+    </script>
+</body>
+</html>
