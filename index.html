@@ -176,8 +176,9 @@
         const service = await server.getPrimaryService(SERVICE_UUID);
         bleCharacteristic = await service.getCharacteristic(TARGET_CHARACTERISTIC_UUID);
 
-        await bleCharacteristic.startNotifications();
         bleCharacteristic.addEventListener('characteristicvaluechanged', handleData);
+
+        await bleCharacteristic.startNotifications();
         document.getElementById('statusVal').innerText = "✅ 已成功連線 ESP32！";
       } catch (error) {
         console.error("藍牙連線錯誤:", error);
