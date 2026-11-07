@@ -24,103 +24,48 @@
       flex-direction: column;
       align-items: center;
     }
-    h1 {
-      color: var(--accent-blue);
-      margin-bottom: 20px;
-      font-weight: 600;
-      letter-spacing: 1px;
-    }
+    h1 { color: var(--accent-blue); margin-bottom: 20px; font-weight: 600; letter-spacing: 1px; }
     .btn-connect {
       background: linear-gradient(135deg, #0052d4, #4364f7, #6fb1fc);
-      color: white;
-      border: none;
-      padding: 12px 30px;
-      font-size: 16px;
-      font-weight: bold;
-      border-radius: 25px;
-      cursor: pointer;
-      box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+      color: white; border: none; padding: 12px 30px; font-size: 16px; font-weight: bold;
+      border-radius: 25px; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
       transition: all 0.3s ease;
     }
     .btn-connect:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 210, 255, 0.5); }
     
     .dashboard {
-      width: 100%;
-      max-width: 800px;
-      margin-top: 25px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      width: 100%; max-width: 800px; margin-top: 25px;
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
     }
     .card {
-      background: var(--card-bg);
-      padding: 20px;
-      border-radius: 15px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-      text-align: center;
+      background: var(--card-bg); padding: 20px; border-radius: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 10px 20px rgba(0,0,0,0.3); text-align: center;
     }
     .card-full { grid-column: 1 / -1; }
     .val-display { font-size: 32px; font-weight: bold; color: var(--accent-blue); margin: 10px 0; }
     .status-box { font-size: 18px; color: var(--accent-green); padding: 5px; font-weight: bold; }
 
-    .mode-switch {
-      display: flex;
-      justify-content: center;
-      gap: 15px;
-      margin-top: 15px;
-    }
+    .mode-switch { display: flex; justify-content: center; gap: 15px; margin-top: 15px; }
     .btn-mode {
-      padding: 10px 25px;
-      border-radius: 8px;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-      background: #2a3447;
-      color: var(--text-sub);
-      transition: 0.2s;
+      padding: 10px 25px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer;
+      background: #2a3447; color: var(--text-sub); transition: 0.2s;
     }
     .btn-mode.active { background: var(--accent-blue); color: #000; box-shadow: 0 0 10px rgba(0, 210, 255, 0.4); }
 
-    .controls-grid {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
-      margin-top: 15px;
-    }
-    .column-box {
-      background: #1e293b;
-      padding: 15px;
-      border-radius: 10px;
-      text-align: left;
-    }
+    .controls-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px; }
+    .column-box { background: #1e293b; padding: 15px; border-radius: 10px; text-align: left; }
     .column-box b { color: var(--accent-blue); display: block; margin-bottom: 8px; text-align: center; }
     .btn-group { display: flex; gap: 8px; margin-top: 8px; }
     .btn-action {
-      flex: 1;
-      padding: 8px;
-      border-radius: 5px;
-      border: none;
-      font-weight: bold;
-      cursor: pointer;
-      color: white;
-      transition: 0.2s;
+      flex: 1; padding: 8px; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; color: white; transition: 0.2s;
     }
     .btn-on { background-color: #10b981; }
     .btn-on:hover { background-color: #059669; }
     .btn-off { background-color: #ef4444; }
     .btn-off:hover { background-color: #dc2626; }
     .btn-danger {
-      background-color: var(--accent-red);
-      grid-column: 1 / -1;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 8px;
-      margin-top: 10px;
-      cursor: pointer;
-      border: none;
-      color: white;
-      font-weight: bold;
+      background-color: var(--accent-red); grid-column: 1 / -1; padding: 12px; font-size: 16px;
+      border-radius: 8px; margin-top: 10px; cursor: pointer; border: none; color: white; font-weight: bold;
     }
     .btn-danger:hover { background-color: #dc2626; }
   </style>
@@ -131,7 +76,6 @@
   <button class="btn-connect" onclick="connectBLE()">📡 連接 ESP32 控制板</button>
 
   <div class="dashboard">
-    <!-- 姿勢數據 -->
     <div class="card">
       <div>俯仰角 (Pitch)</div>
       <div class="val-display" id="pitchVal">0.0°</div>
@@ -141,7 +85,6 @@
       <div class="val-display" id="rollVal">0.0°</div>
     </div>
 
-    <!-- 系統狀態 -->
     <div class="card card-full">
       <div>系統控制狀態</div>
       <div class="status-box" id="statusVal">等待連線...</div>
@@ -151,7 +94,6 @@
       </div>
     </div>
 
-    <!-- 手動獨立控制區 -->
     <div class="card card-full" id="manualPanel">
       <h3>🛠️ 獨立柱體手動控制 (ON / OFF)</h3>
       <div class="controls-grid">
@@ -215,19 +157,16 @@
     let bleCharacteristic;
 
     async function connectBLE() {
-      // 1. 檢測瀏覽器是否支援 Web Bluetooth
       if (!navigator.bluetooth) {
-        alert("您的瀏覽器不支援網頁藍牙！請務必使用 Google Chrome 或 Microsoft Edge 瀏覽器開啟。");
+        alert("您的瀏覽器不支援網頁藍牙！請使用 Chrome 或 Edge。");
         return;
       }
 
       try {
-        // 2. 必須由使用者點擊直接觸發的藍牙裝置請求
         const device = await navigator.bluetooth.requestDevice({
           filters: [{ name: 'SemiSub-Controller' }],
-          optionalServices: [SERVICE_UUID]
+          optionalServices: [SERVICE_UUID] // 解決 NotSupportedError 關鍵
         });
-
         const server = await device.gatt.connect();
         const service = await server.getPrimaryService(SERVICE_UUID);
         bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
@@ -236,7 +175,7 @@
         bleCharacteristic.addEventListener('characteristicvaluechanged', handleData);
         document.getElementById('statusVal').innerText = "✅ 已成功連線 ESP32！";
       } catch (error) {
-        console.error("藍牙連線失敗:", error);
+        console.error("連線失敗:", error);
         alert("連線失敗或已取消：" + error.message);
       }
     }
@@ -257,7 +196,7 @@
         let encoder = new TextEncoder();
         await bleCharacteristic.writeValue(encoder.encode(cmd));
       } else {
-        alert("尚未連接藍牙！請先點擊上方「連接 ESP32 控制板」按鈕。");
+        alert("尚未連接藍牙！請先點擊上方按鈕連線。");
       }
     }
 
