@@ -2,63 +2,110 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>AIOT 半潛平台控制</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AIOT 半潛平台控制面板</title>
     <style>
-        body { font-family: Arial; text-align: center; padding: 30px; background: #f4f6f9; }
+        body { font-family: Arial, sans-serif; text-align: center; padding: 20px; background: #f4f6f9; }
         .box { background: white; padding: 20px; border-radius: 10px; max-width: 500px; margin: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        button { padding: 12px 20px; font-size: 16px; margin: 5px; cursor: pointer; border: none; border-radius: 5px; }
-        .btn-con { background: #007bff; color: white; }
+        button { padding: 10px 16px; font-size: 15px; margin: 4px; cursor: pointer; border: none; border-radius: 5px; }
+        .btn-con { background: #007bff; color: white; padding: 12px 24px; font-size: 16px; }
+        .btn-mode { background: #ffc107; font-weight: bold; }
         .btn-on { background: #28a745; color: white; }
         .btn-off { background: #6c757d; color: white; }
-        .btn-stop { background: #dc3545; color: white; width: 100%; margin-top: 15px; }
+        .btn-stop { background: #dc3545; color: white; width: 100%; margin-top: 15px; font-size: 16px; padding: 12px; }
+        .col-card { background: #f8f9fa; border: 1px solid #ddd; border-radius: 6px; padding: 10px; margin: 10px 0; }
     </style>
 </head>
 <body>
     <div class="box">
         <h2>🌊 半潛平台控制面板</h2>
-        <button class="btn-con" onclick="connectBLE()">連接 ESP32 藍牙</button>
+        <button id="connectBtn" class="btn-con" onclick="connectBLE()">連接 ESP32 藍牙</button>
         <p>狀態: <span id="status" style="color:red; font-weight:bold;">未連線</span></p>
 
         <hr>
-        <h3>立柱 1 控制</h3>
-        <button class="btn-on" onclick="send('1,pump,1')">打氣 ON</button>
-        <button class="btn-off" onclick="send('1,pump,0')">打氣 OFF</button><br>
-        <button class="btn-on" onclick="send('1,valve,1')">排氣 ON</button>
-        <button class="btn-off" onclick="send('1,valve,0')">排氣 OFF</button>
+        <div style="text-align: left; background: #eef2f7; padding: 10px; border-radius: 6px;">
+            <b>姿態數據：</b> Pitch: <span id="pitchVal">--</span>° | Roll: <span id="rollVal">--</span>°<br>
+            <b>運行模式：</b> <span id="modeVal">--</span>
+        </div>
+        <div style="margin-top: 10px;">
+            <button class="btn-mode" onclick="send('auto')">切換【自動平衡】</button>
+            <button class="btn-mode" style="background:#17a2b8; color:white;" onclick="send('manual')">切換【手動模式】</button>
+        </div>
+
+        <hr>
+        <h3>4 柱體手動控制</h3>
+        <div class="col-card">
+            <b>立柱 1</b><br>
+            打氣: <button class="btn-on" onclick="send('1,pump,1')">ON</button> <button class="btn-off" onclick="send('1,pump,0')">OFF</button> | 
+            排氣: <button class="btn-on" onclick="send('1,valve,1')">ON</button> <button class="btn-off" onclick="send('1,valve,0')">OFF</button>
+        </div>
+        <div class="col-card">
+            <b>立柱 2</b><br>
+            打氣: <button class="btn-on" onclick="send('2,pump,1')">ON</button> <button class="btn-off" onclick="send('2,pump,0')">OFF</button> | 
+            排氣: <button class="btn-on" onclick="send('2,valve,1')">ON</button> <button class="btn-off" onclick="send('2,valve,0')">OFF</button>
+        </div>
+        <div class="col-card">
+            <b>立柱 3</b><br>
+            打氣: <button class="btn-on" onclick="send('3,pump,1')">ON</button> <button class="btn-off" onclick="send('3,pump,0')">OFF</button> | 
+            排氣: <button class="btn-on" onclick="send('3,valve,1')">ON</button> <button class="btn-off" onclick="send('3,valve,0')">OFF</button>
+        </div>
+        <div class="col-card">
+            <b>立柱 4</b><br>
+            打氣: <button class="btn-on" onclick="send('4,pump,1')">ON</button> <button class="btn-off" onclick="send('4,pump,0')">OFF</button> | 
+            排氣: <button class="btn-on" onclick="send('4,valve,1')">ON</button> <button class="btn-off" onclick="send('4,valve,0')">OFF</button>
+        </div>
 
         <button class="btn-stop" onclick="send('emergency_stop')">⚠️ 緊急全部關閉</button>
     </div>
 
     <script>
         const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
-        const CHAR_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a6";
-        let characteristic;
+        const CHAR_RX_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a6";
+        const CHAR_TX_UUID = "1b950702-f94f-438d-932d-92c90299fde2";
+
+        let rxCharacteristic = null;
+        let txCharacteristic = null;
 
         async function connectBLE() {
             try {
                 const device = await navigator.bluetooth.requestDevice({
-                    filters: [{ services: [SERVICE_UUID] }],
+                    acceptAllDevices: true,
                     optionalServices: [SERVICE_UUID]
                 });
+
                 const server = await device.gatt.connect();
-                const service = await server.getService(SERVICE_UUID);
-                characteristic = await service.getCharacteristic(CHAR_UUID);
+                // 修正：必須使用 getPrimaryService
+                const service = await server.getPrimaryService(SERVICE_UUID);
+
+                rxCharacteristic = await service.getCharacteristic(CHAR_RX_UUID);
+                txCharacteristic = await service.getCharacteristic(CHAR_TX_UUID);
+
+                await txCharacteristic.startNotifications();
+                txCharacteristic.addEventListener('characteristicvaluechanged', (e) => {
+                    const dataStr = new TextDecoder('utf-8').decode(e.target.value);
+                    const parts = dataStr.split(',');
+                    parts.forEach(p => {
+                        const kv = p.split(':');
+                        if (kv[0] === 'pitch') document.getElementById('pitchVal').innerText = kv[1];
+                        if (kv[0] === 'roll') document.getElementById('rollVal').innerText = kv[1];
+                        if (kv[0] === 'mode') document.getElementById('modeVal').innerText = kv[1];
+                    });
+                });
 
                 document.getElementById('status').innerText = "已連線";
                 document.getElementById('status').style.color = "green";
-                alert("藍牙連線成功！");
+                document.getElementById('connectBtn').innerText = "已連線";
             } catch (error) {
                 alert("連線失敗: " + error);
             }
         }
 
         async function send(cmd) {
-            if (!characteristic) {
+            if (!rxCharacteristic) {
                 alert("請先連線藍牙！");
                 return;
             }
-            const encoder = new TextEncoder();
-            await characteristic.writeValue(encoder.encode(cmd));
+            await rxCharacteristic.writeValue(new TextEncoder().encode(cmd));
         }
     </script>
 </body>
