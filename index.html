@@ -123,71 +123,16 @@
                 rxCharacteristic = await service.getCharacteristic(CHAR_RX_UUID);
                 txCharacteristic = await service.getCharacteristic(CHAR_TX_UUID);
 
-                // 啟動 Notify 監聽 ESP32 傳回的資料
+                // 啟動 Notify 監聽 ESP32 傳回的純字串資料
                 await txCharacteristic.startNotifications();
                 txCharacteristic.addEventListener('characteristicvaluechanged', (event) => {
                     const value = event.target.value;
                     const decoder = new TextDecoder('utf-8');
-                    const dataStr = decoder.decode(value); // 格式如: pitch:1.20,roll:0.50,mode:manual
+                    const dataStr = decoder.decode(value); // 收到格式如: pitch:1.20,roll:0.50,mode:manual
                     
                     parseTelemetry(dataStr);
                 });
 
                 document.getElementById('status').innerText = "已連線";
                 document.getElementById('status').className = "status-text connected";
-                document.getElementById('connectBtn').innerText = "已連線";
-                alert("藍牙連線成功！");
-
-            } catch (error) {
-                console.error("連線失敗:", error);
-                alert("藍牙連線失敗或被取消。");
-            }
-        }
-
-        // 解析來自 ESP32 的純字串回報
-        function parseTelemetry(str) {
-            const parts = str.split(',');
-            let pitch = "--", roll = "--", mode = "--", rabboniLinked = false;
-
-            parts.forEach(part => {
-                const kv = part.split(':');
-                if (kv[0] === 'pitch') pitch = kv[1];
-                if (kv[0] === 'roll') roll = kv[1];
-                if (kv[0] === 'mode') mode = kv[1];
-            });
-
-            document.getElementById('pitchVal').innerText = pitch;
-            document.getElementById('rollVal').innerText = roll;
-            document.getElementById('modeVal').innerText = mode;
-            
-            let rabEl = document.getElementById('rabboniStatus');
-            rabEl.innerText = "已連線 (E4:38:6A:16:6D:64)";
-            rabEl.style.color = "#28a745";
-        }
-
-        async function sendCommand(cmdStr) {
-            if (!rxCharacteristic) {
-                alert("請先點擊上方按鈕連線藍牙！");
-                return;
-            }
-            const encoder = new TextEncoder();
-            await rxCharacteristic.writeValue(encoder.encode(cmdStr));
-            console.log("已發送指令:", cmdStr);
-        }
-
-        function setMode(modeName) {
-            sendCommand(modeName); // 傳送 "auto" 或 "manual"
-        }
-
-        function sendControl(col, action, state) {
-            // 傳送格式: "柱體,動作,狀態" 例如 "1,pump,1"
-            sendCommand(`${col},${action},${state}`);
-        }
-
-        function emergencyStop() {
-            sendCommand("emergency_stop");
-            alert("已發送【緊急停止】指令，所有繼電器已關閉！");
-        }
-    </script>
-</body>
-</html>
+                document.getElementById('connectBtn').
