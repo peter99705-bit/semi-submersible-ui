@@ -215,11 +215,19 @@
     let bleCharacteristic;
 
     async function connectBLE() {
+      // 1. 檢測瀏覽器是否支援 Web Bluetooth
+      if (!navigator.bluetooth) {
+        alert("您的瀏覽器不支援網頁藍牙！請務必使用 Google Chrome 或 Microsoft Edge 瀏覽器開啟。");
+        return;
+      }
+
       try {
+        // 2. 必須由使用者點擊直接觸發的藍牙裝置請求
         const device = await navigator.bluetooth.requestDevice({
           filters: [{ name: 'SemiSub-Controller' }],
-          optionalServices: [SERVICE_UUID] // 👈 解決 NotSupportedError 的關鍵
+          optionalServices: [SERVICE_UUID]
         });
+
         const server = await device.gatt.connect();
         const service = await server.getPrimaryService(SERVICE_UUID);
         bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
@@ -228,7 +236,8 @@
         bleCharacteristic.addEventListener('characteristicvaluechanged', handleData);
         document.getElementById('statusVal').innerText = "✅ 已成功連線 ESP32！";
       } catch (error) {
-        alert("連線失敗：" + error);
+        console.error("藍牙連線失敗:", error);
+        alert("連線失敗或已取消：" + error.message);
       }
     }
 
@@ -248,7 +257,7 @@
         let encoder = new TextEncoder();
         await bleCharacteristic.writeValue(encoder.encode(cmd));
       } else {
-        alert("尚未連接藍牙！請先點擊上方按鈕連線。");
+        alert("尚未連接藍牙！請先點擊上方「連接 ESP32 控制板」按鈕。");
       }
     }
 
