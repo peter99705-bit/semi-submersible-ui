@@ -152,21 +152,23 @@
   </div>
 
   <script>
+    // 嚴格對齊 ESP32 端的 UUID
     const SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
     const CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a9";
     let bleCharacteristic;
 
     async function connectBLE() {
       if (!navigator.bluetooth) {
-        alert("您的瀏覽器不支援網頁藍牙！請使用 Chrome 或 Edge。");
+        alert("您的瀏覽器不支援網頁藍牙！請使用 Google Chrome 或 Microsoft Edge 瀏覽器。");
         return;
       }
 
       try {
         const device = await navigator.bluetooth.requestDevice({
           filters: [{ name: 'SemiSub-Controller' }],
-          optionalServices: [SERVICE_UUID] // 解決 NotSupportedError 關鍵
+          optionalServices: [SERVICE_UUID] // 解決 NotSupportedError 的核心關鍵
         });
+
         const server = await device.gatt.connect();
         const service = await server.getPrimaryService(SERVICE_UUID);
         bleCharacteristic = await service.getCharacteristic(CHARACTERISTIC_UUID);
@@ -175,7 +177,7 @@
         bleCharacteristic.addEventListener('characteristicvaluechanged', handleData);
         document.getElementById('statusVal').innerText = "✅ 已成功連線 ESP32！";
       } catch (error) {
-        console.error("連線失敗:", error);
+        console.error("連線錯誤詳情:", error);
         alert("連線失敗或已取消：" + error.message);
       }
     }
@@ -196,7 +198,7 @@
         let encoder = new TextEncoder();
         await bleCharacteristic.writeValue(encoder.encode(cmd));
       } else {
-        alert("尚未連接藍牙！請先點擊上方按鈕連線。");
+        alert("尚未連接藍牙！請先點擊上方「連接 ESP32 控制板」按鈕。");
       }
     }
 
