@@ -1,806 +1,227 @@
-
-<!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Semi-Submersible Platform Control</title>
-
-<style>
-:root {
-    --bg: #070d18;
-    --panel: #101a2b;
-    --panel2: #162338;
-    --cyan: #00d9ff;
-    --blue: #087cff;
-    --green: #00df91;
-    --red: #ff5266;
-    --text: #eaf4ff;
-    --muted: #8295ad;
-}
-
-* {
-    box-sizing: border-box;
-}
-
-body {
-    margin: 0;
-    padding: 25px;
-    background:
-        radial-gradient(circle at top, #142b49, var(--bg) 60%);
-    color: var(--text);
-    font-family: "Segoe UI", "Microsoft JhengHei", sans-serif;
-}
-
-.container {
-    width: 100%;
-    max-width: 1100px;
-    margin: auto;
-}
-
-header {
-    text-align: center;
-    margin-bottom: 35px;
-}
-
-header h1 {
-    color: var(--cyan);
-    font-size: 29px;
-    letter-spacing: 2px;
-    margin-bottom: 8px;
-}
-
-header p {
-    color: var(--muted);
-    font-size: 13px;
-    letter-spacing: 2px;
-}
-
-.panel {
-    background: rgba(16, 26, 43, 0.94);
-    border: 1px solid rgba(0, 217, 255, 0.13);
-    border-radius: 17px;
-    padding: 25px;
-    margin-bottom: 22px;
-    box-shadow: 0 8px 30px rgba(0,0,0,.2);
-}
-
-.section-title {
-    text-align: center;
-    color: var(--cyan);
-    font-size: 19px;
-    font-weight: bold;
-    margin-bottom: 22px;
-}
-
-button {
-    border: none;
-    border-radius: 9px;
-    padding: 13px 20px;
-    font-size: 15px;
-    font-weight: bold;
-    cursor: pointer;
-    transition: .2s;
-}
-
-button:hover:not(:disabled) {
-    filter: brightness(1.2);
-    transform: translateY(-2px);
-}
-
-button:disabled {
-    opacity: .4;
-    cursor: not-allowed;
-}
-
-.connect-area {
-    text-align: center;
-}
-
-.connect-btn {
-    background: linear-gradient(120deg, #006bff, #00bce9);
-    color: white;
-    padding: 16px 35px;
-    font-size: 17px;
-    border-radius: 30px;
-}
-
-.disconnect-btn {
-    background: #35445b;
-    color: white;
-    margin-left: 8px;
-}
-
-.connection-info {
-    margin-top: 17px;
-    color: var(--muted);
-    font-size: 14px;
-}
-
-.status-dot {
-    display: inline-block;
-    width: 9px;
-    height: 9px;
-    background: #777;
-    border-radius: 50%;
-    margin-right: 7px;
-}
-
-.status-dot.online {
-    background: var(--green);
-    box-shadow: 0 0 10px var(--green);
-}
-
-.angle-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 20px;
-}
-
-.angle-card {
-    background: var(--panel2);
-    padding: 30px 15px;
-    border-radius: 14px;
-    text-align: center;
-    border: 1px solid rgba(0,217,255,.1);
-}
-
-.angle-label {
-    color: #a8bdd5;
-    font-size: 18px;
-}
-
-.angle-value {
-    font-size: 39px;
-    font-weight: bold;
-    color: var(--cyan);
-    margin-top: 14px;
-}
-
-.angle-unit {
-    font-size: 20px;
-}
-
-.system-status {
-    text-align: center;
-}
-
-.status-text {
-    color: var(--green);
-    font-size: 20px;
-    font-weight: bold;
-    margin: 15px 0;
-}
-
-.mode-buttons {
-    display: flex;
-    justify-content: center;
-    gap: 12px;
-    flex-wrap: wrap;
-}
-
-.auto-btn {
-    background: #006d80;
-    color: white;
-}
-
-.manual-btn {
-    background: #35445b;
-    color: white;
-}
-
-.active-mode {
-    outline: 2px solid var(--cyan);
-}
-
-.control-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-}
-
-.column-card {
-    background: var(--panel2);
-    border-radius: 12px;
-    padding: 17px;
-    text-align: center;
-}
-
-.column-card h3 {
-    color: var(--cyan);
-    margin-top: 0;
-}
-
-.control-buttons {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 9px;
-}
-
-.pump-on {
-    background: #087a58;
-    color: white;
-}
-
-.pump-off {
-    background: #a62e3b;
-    color: white;
-}
-
-.valve-on {
-    background: #087a58;
-    color: white;
-}
-
-.valve-off {
-    background: #a62e3b;
-    color: white;
-}
-
-.notice {
-    text-align: center;
-    color: #ffcf70;
-    font-size: 13px;
-    line-height: 1.8;
-}
-
-.data-log {
-    background: #080f1b;
-    padding: 15px;
-    border-radius: 10px;
-    font-family: monospace;
-    color: #9bbbd5;
-    font-size: 13px;
-    max-height: 180px;
-    overflow-y: auto;
-    white-space: pre-wrap;
-}
-
-footer {
-    text-align: center;
-    color: #63768e;
-    font-size: 12px;
-    padding: 15px;
-}
-
-@media(max-width:600px) {
-    body {
-        padding: 12px;
-    }
-
-    .angle-grid,
-    .control-grid {
-        grid-template-columns: 1fr;
-    }
-
-    header h1 {
-        font-size: 22px;
-    }
-
-    .angle-value {
-        font-size: 34px;
-    }
-
-    .panel {
-        padding: 17px;
-    }
-}
-</style>
-</head>
-
-<body>
-
-<div class="container">
-
-<header>
-    <h1>SEMI-SUBMERSIBLE PLATFORM</h1>
-    <p>INTELLIGENT BALANCE CONTROL SYSTEM</p>
-</header>
-
-<!-- BLE CONNECTION -->
-
-<div class="panel connect-area">
-
-    <div class="section-title">
-        📡 ESP32 BLUETOOTH CONNECTION
-    </div>
-
-    <button class="connect-btn" id="connectBtn">
-        🔌 連接 ESP32 控制板
-    </button>
-
-    <button class="disconnect-btn" id="disconnectBtn" disabled>
-        斷開連線
-    </button>
-
-    <div class="connection-info">
-        <span class="status-dot" id="connectionDot"></span>
-        <span id="connectionStatus">尚未連線</span>
-    </div>
-
-    <div class="connection-info">
-        裝置名稱：
-        <span id="deviceName">未連接</span>
-    </div>
-
-</div>
-
-<!-- ANGLE DISPLAY -->
-
-<div class="angle-grid">
-
-    <div class="angle-card">
-        <div class="angle-label">俯仰角 (Pitch)</div>
-        <div class="angle-value">
-            <span id="pitchVal">0.0</span>
-            <span class="angle-unit">°</span>
-        </div>
-    </div>
-
-    <div class="angle-card">
-        <div class="angle-label">橫滾角 (Roll)</div>
-        <div class="angle-value">
-            <span id="rollVal">0.0</span>
-            <span class="angle-unit">°</span>
-        </div>
-    </div>
-
-</div>
-
-<!-- SYSTEM STATUS -->
-
-<div class="panel system-status">
-
-    <div class="section-title">
-        ⚙️ 系統控制狀態
-    </div>
-
-    <div class="status-text" id="statusVal">
-        等待連線...
-    </div>
-
-    <div class="mode-buttons">
-
-        <button class="auto-btn active-mode" id="autoBtn" disabled>
-            🤖 自動平衡模式
-        </button>
-
-        <button class="manual-btn" id="manualBtn" disabled>
-            🎮 手動控制模式
-        </button>
-
-    </div>
-
-    <p class="notice" id="modeNotice">
-        目前為監測模式，尚未啟用實際機械控制。
-    </p>
-
-</div>
-
-<!-- MANUAL CONTROL -->
-
-<div class="panel">
-
-    <div class="section-title">
-        🔧 獨立柱體手動控制 (ON / OFF)
-    </div>
-
-    <div class="control-grid">
-
-        <div class="column-card">
-            <h3>柱 1 控制</h3>
-            <div class="control-buttons">
-                <button class="pump-on" disabled>充氣 開</button>
-                <button class="pump-off" disabled>充氣 關</button>
-                <button class="valve-on" disabled>放氣 開</button>
-                <button class="valve-off" disabled>放氣 關</button>
-            </div>
-        </div>
-
-        <div class="column-card">
-            <h3>柱 2 控制</h3>
-            <div class="control-buttons">
-                <button class="pump-on" disabled>充氣 開</button>
-                <button class="pump-off" disabled>充氣 關</button>
-                <button class="valve-on" disabled>放氣 開</button>
-                <button class="valve-off" disabled>放氣 關</button>
-            </div>
-        </div>
-
-        <div class="column-card">
-            <h3>柱 3 控制</h3>
-            <div class="control-buttons">
-                <button class="pump-on" disabled>充氣 開</button>
-                <button class="pump-off" disabled>充氣 關</button>
-                <button class="valve-on" disabled>放氣 開</button>
-                <button class="valve-off" disabled>放氣 關</button>
-            </div>
-        </div>
-
-        <div class="column-card">
-            <h3>柱 4 控制</h3>
-            <div class="control-buttons">
-                <button class="pump-on" disabled>充氣 開</button>
-                <button class="pump-off" disabled>充氣 關</button>
-                <button class="valve-on" disabled>放氣 開</button>
-                <button class="valve-off" disabled>放氣 關</button>
-            </div>
-        </div>
-
-    </div>
-
-    <p class="notice">
-        手動輸出按鈕目前停用，避免監測階段意外啟動機械設備。
-    </p>
-
-</div>
-
-<!-- DATA LOG -->
-
-<div class="panel">
-
-    <div class="section-title">
-        📊 Rabboni 即時資料紀錄
-    </div>
-
-    <div class="data-log" id="dataLog">
-等待 ESP32 傳送姿態資料...
-    </div>
-
-</div>
-
-<footer>
-    SEMI-SUBMERSIBLE INTELLIGENT CONTROL SYSTEM
-    <br>
-    ESP32 + BLE + Rabboni
-</footer>
-
-</div>
-
-<script>
-
-// ==========================================
-// 1. BLE UUID
-// ==========================================
-
-const SERVICE_UUID =
-    "4fafc201-1fb5-459e-8fcc-c5c9c331914b";
-
-const CHARACTERISTIC_UUID =
-    "beb5483e-36e1-4688-b7f5-ea07361b26a9";
-
-// ==========================================
-// 2. BLE 變數
-// ==========================================
-
-let bleDevice = null;
-let bleServer = null;
-let bleService = null;
-let bleCharacteristic = null;
-
-let connected = false;
-
-// ==========================================
-// 3. HTML 元素
-// ==========================================
-
-const connectBtn =
-    document.getElementById("connectBtn");
-
-const disconnectBtn =
-    document.getElementById("disconnectBtn");
-
-const connectionStatus =
-    document.getElementById("connectionStatus");
-
-const connectionDot =
-    document.getElementById("connectionDot");
-
-const deviceName =
-    document.getElementById("deviceName");
-
-const pitchVal =
-    document.getElementById("pitchVal");
-
-const rollVal =
-    document.getElementById("rollVal");
-
-const statusVal =
-    document.getElementById("statusVal");
-
-const dataLog =
-    document.getElementById("dataLog");
-
-// ==========================================
-// 4. 狀態更新
-// ==========================================
-
-function setConnectionStatus(message, online) {
-
-    connectionStatus.innerText = message;
-
-    connectionDot.classList.toggle(
-        "online",
-        online
-    );
-
-    connected = online;
-
-    connectBtn.disabled = online;
-    disconnectBtn.disabled = !online;
-
-    document.getElementById("autoBtn").disabled = !online;
-    document.getElementById("manualBtn").disabled = !online;
-}
-
-// ==========================================
-// 5. 資料紀錄
-// ==========================================
-
-function addLog(message) {
-
-    const time = new Date().toLocaleTimeString();
-
-    dataLog.innerText =
-        `[${time}] ${message}\n` +
-        dataLog.innerText;
-
-    // 限制紀錄長度
-    dataLog.innerText =
-        dataLog.innerText.slice(0, 3000);
-}
-
-// ==========================================
-// 6. 接收 ESP32 資料
-// ==========================================
-
-function handleData(event) {
-
-    try {
-
-        const decoder = new TextDecoder("utf-8");
-
-        const data = decoder.decode(
-            event.target.value
-        ).trim();
-
-        addLog("收到資料：" + data);
-
-        const values = data.split(",");
-
-        if (values.length !== 2) {
-
-            addLog("資料格式錯誤，預期為 pitch,roll");
-
-            return;
-        }
-
-        const pitch = Number(values[0]);
-        const roll = Number(values[1]);
-
-        if (
-            !Number.isFinite(pitch) ||
-            !Number.isFinite(roll)
-        ) {
-
-            addLog("角度資料不是有效數字");
-
-            return;
-        }
-
-        pitchVal.innerText = pitch.toFixed(1);
-        rollVal.innerText = roll.toFixed(1);
-
-        statusVal.innerText =
-            "✅ 姿態資料接收中";
-
-    }
-
-    catch(error) {
-
-        addLog("資料解析錯誤：" + error.message);
-
+#include <BLEDevice.h>
+#include <BLEServer.h>
+#include <BLEClient.h>
+#include <BLEUtils.h>
+#include <BLE2902.h>
+#include <math.h>
+
+// ==================== 1. 硬體腳位定義 (對應 8路繼電器) ====================
+const int RELAY_PINS[8] = {23, 22, 21, 19, 18, 5, 17, 16};
+/*
+  PIN 23 (IN 1): 立柱 1 微型打氣機
+  PIN 22 (IN 2): 立柱 1 0520D 閥門 (排氣)
+  PIN 21 (IN 3): 立柱 2 微型打氣機
+  PIN 19 (IN 4): 立柱 2 0520D 閥門 (排氣)
+  PIN 18 (IN 5): 立柱 3 微型打氣機
+  PIN 5  (IN 6): 立柱 3 0520D 閥門 (排氣)
+  PIN 17 (IN 7): 立柱 4 微型打氣機
+  PIN 16 (IN 8): 立柱 4 0520D 閥門 (排氣)
+*/
+
+// ==================== 2. 藍牙 BLE 設定 ====================
+#define WEB_SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+#define WEB_CHAR_RX_UUID        "beb5483e-36e1-4688-b7f5-ea07361b26a6" 
+#define WEB_CHAR_TX_UUID        "1b950702-f94f-438d-932d-92c90299fde2" 
+
+// 您的 Rabboni 藍牙 MAC 位址
+static BLEAddress rabboniAddress("E4:38:6A:16:6D:64");
+static boolean rabboniConnected = false;
+static BLERemoteCharacteristic* pRabboniRemoteCharacteristic;
+
+BLEServer* pWebServer = NULL;
+BLECharacteristic* pWebTxCharacteristic = NULL;
+bool webDeviceConnected = false;
+
+// 系統運行狀態與感測數據
+String systemMode = "manual"; // "auto" 或 "manual"
+float currentPitch = 0.0;
+float currentRoll = 0.0;
+unsigned long lastTelemetryTime = 0;
+const long telemetryInterval = 500; // 每 500ms 回傳一次狀態給網頁
+
+const float TILT_THRESHOLD = 5.0; // 自動平衡啟動閾值 (度)
+
+// ==================== 3. Rabboni 數據通知回調 ====================
+static void rabboniNotifyCallback(
+  BLERemoteCharacteristic* pBLERemoteCharacteristic,
+  uint8_t* pData,
+  size_t length,
+  bool isNotify) {
+    
+    if (length >= 12) {
+        int16_t rawAx = (pData[1] << 8) | pData[0];
+        int16_t rawAy = (pData[3] << 8) | pData[2];
+        int16_t rawAz = (pData[5] << 8) | pData[4];
+
+        float ax = rawAx / 4096.0;
+        float ay = rawAy / 4096.0;
+        float az = rawAz / 4096.0;
+
+        currentPitch = atan2(ax, sqrt(ay * ay + az * az)) * 180.0 / M_PI;
+        currentRoll  = atan2(ay, sqrt(ax * ax + az * az)) * 180.0 / M_PI;
     }
 }
 
-// ==========================================
-// 7. 連接 ESP32
-// ==========================================
+// ==================== 4. 連線 Rabboni 函數 ====================
+bool connectToRabboni() {
+    Serial.print("🔗 正在連線至 Rabboni 感測器: ");
+    Serial.println(rabboniAddress.toString().c_str());
 
-async function connectESP32() {
+    BLEClient* pClient = BLEDevice::createClient();
+    if (!pClient->connect(rabboniAddress)) {
+        Serial.println("❌ 無法連線至 Rabboni");
+        return false;
+    }
+    Serial.println("✅ 已成功連線至 Rabboni!");
 
-    if (!navigator.bluetooth) {
-
-        alert(
-            "目前瀏覽器不支援 Web Bluetooth，請使用支援 Web Bluetooth 的 Chrome 或 Edge。"
-        );
-
-        return;
+    BLERemoteService* pRemoteService = pClient->getService("ffe0"); 
+    if (pRemoteService == nullptr) {
+        pClient->disconnect();
+        return false;
     }
 
-    try {
+    // 💡 修正處：使用 getCharacteristic
+    pRabboniRemoteCharacteristic = pRemoteService->getCharacteristic("ffe1");
+    if (pRabboniRemoteCharacteristic == nullptr) {
+        pClient->disconnect();
+        return false;
+    }
 
-        setConnectionStatus(
-            "正在搜尋 ESP32...",
-            false
-        );
+    if(pRabboniRemoteCharacteristic->canNotify()) {
+        pRabboniRemoteCharacteristic->registerForNotify(rabboniNotifyCallback);
+    }
 
-        bleDevice = await navigator.bluetooth.requestDevice({
+    rabboniConnected = true;
+    return true;
+}
 
-            filters: [
-                {
-                    services: [SERVICE_UUID]
+// ==================== 5. 網頁端藍牙事件回調 ====================
+class MyServerCallbacks: public BLEServerCallbacks {
+    void onConnected(BLEServer* pServer) {
+        webDeviceConnected = true;
+        Serial.println("🔗 網頁前端已連線");
+    };
+    void onDisconnected(BLEServer* pServer) {
+        webDeviceConnected = false;
+        Serial.println("🔌 網頁端已斷線，重新廣播...");
+        pServer->startAdvertising();
+    }
+};
+
+class MyCallbacks: public BLECharacteristicCallbacks {
+    void onWrite(BLECharacteristic *pCharacteristic) {
+        String rxValue = pCharacteristic->getValue();
+        if (rxValue.length() > 0) {
+            Serial.print("📥 收到指令: ");
+            Serial.println(rxValue);
+
+            if (rxValue.indexOf("auto") != -1) {
+                systemMode = "auto";
+                Serial.println("⚙️ 切換至自動模式");
+            } else if (rxValue.indexOf("manual") != -1) {
+                systemMode = "manual";
+                Serial.println("⚙️ 切換至手動模式");
+            }
+
+            if (rxValue.indexOf("emergency_stop") != -1) {
+                allStop();
+                return;
+            }
+
+            int firstComma = rxValue.indexOf(',');
+            int secondComma = rxValue.indexOf(',', firstComma + 1);
+            if (firstComma != -1 && secondComma != -1) {
+                int col = rxValue.substring(0, firstComma).toInt();
+                String action = rxValue.substring(firstComma + 1, secondComma);
+                int state = rxValue.substring(secondComma + 1).toInt();
+                
+                if (systemMode == "manual") {
+                    controlActuator(col, action, state);
                 }
-            ]
-
-        });
-
-        deviceName.innerText =
-            bleDevice.name || "ESP32";
-
-        bleDevice.addEventListener(
-            "gattserverdisconnected",
-            onDisconnected
-        );
-
-        addLog("找到裝置：" + bleDevice.name);
-
-        // 建立 GATT 連線
-
-        bleServer =
-            await bleDevice.gatt.connect();
-
-        addLog("GATT 連線成功");
-
-        // 取得 Service
-
-        bleService =
-            await bleServer.getPrimaryService(
-                SERVICE_UUID
-            );
-
-        addLog("取得 ESP32 Service");
-
-        // 取得 Characteristic
-
-        bleCharacteristic =
-            await bleService.getCharacteristic(
-                CHARACTERISTIC_UUID
-            );
-
-        addLog("取得 ESP32 Characteristic");
-
-        // 先註冊事件，再啟動通知
-
-        bleCharacteristic.addEventListener(
-            "characteristicvaluechanged",
-            handleData
-        );
-
-        await bleCharacteristic.startNotifications();
-
-        addLog("通知訂閱成功");
-
-        setConnectionStatus(
-            "ESP32 已成功連線",
-            true
-        );
-
-        statusVal.innerText =
-            "等待 Rabboni 姿態資料...";
-
+            }
+        }
     }
+};
 
-    catch(error) {
+// ==================== 6. 執行機構控制與安全保護 ====================
+void controlActuator(int col, String action, int state) {
+    if (col < 1 || col > 4) return;
+    int pinIndex = -1;
+    if (action == "pump") pinIndex = (col - 1) * 2;     
+    else if (action == "valve") pinIndex = (col - 1) * 2 + 1; 
 
-        console.error(error);
-
-        addLog("連線失敗：" + error.message);
-
-        setConnectionStatus(
-            "連線失敗：" + error.message,
-            false
-        );
-
+    if (pinIndex != -1) {
+        digitalWrite(RELAY_PINS[pinIndex], state == 1 ? LOW : HIGH); // Active Low
+        Serial.print("🕹️ 柱體 "); Serial.print(col);
+        Serial.print(" ["); Serial.print(action);
+        Serial.print("] -> "); Serial.println(state == 1 ? "ON" : "OFF");
     }
 }
 
-// ==========================================
-// 8. 斷開連線
-// ==========================================
-
-function onDisconnected() {
-
-    addLog("ESP32 已斷線");
-
-    bleCharacteristic = null;
-    bleService = null;
-    bleServer = null;
-
-    setConnectionStatus(
-        "ESP32 已斷線",
-        false
-    );
-
-    statusVal.innerText = "等待連線...";
-
-    pitchVal.innerText = "0.0";
-    rollVal.innerText = "0.0";
+void allStop() {
+    for (int i = 0; i < 8; i++) digitalWrite(RELAY_PINS[i], HIGH);
+    Serial.println("⚠️ 【安全保護】所有幫浦與閥門已強制關閉！");
 }
 
-function disconnectESP32() {
-
-    if (
-        bleDevice &&
-        bleDevice.gatt &&
-        bleDevice.gatt.connected
-    ) {
-
-        bleDevice.gatt.disconnect();
-
-    }
-    else {
-
-        onDisconnected();
-
+// ==================== 7. 自動平衡邏輯 ====================
+void runAutoBalanceLogic() {
+    if (currentPitch > TILT_THRESHOLD) {
+        controlActuator(1, "pump", 1); 
+    } else if (currentPitch < -TILT_THRESHOLD) {
+        controlActuator(3, "pump", 1); 
+    } else {
+        for (int i = 0; i < 8; i++) digitalWrite(RELAY_PINS[i], HIGH);
     }
 }
 
-// ==========================================
-// 9. 按鈕事件
-// ==========================================
+// ==================== 8. Setup ====================
+void setup() {
+    Serial.begin(115200);
+    Serial.println("🚀 系統啟動中...");
 
-connectBtn.addEventListener(
-    "click",
-    connectESP32
-);
+    for (int i = 0; i < 8; i++) {
+        pinMode(RELAY_PINS[i], OUTPUT);
+        digitalWrite(RELAY_PINS[i], HIGH);
+    }
 
-disconnectBtn.addEventListener(
-    "click",
-    disconnectESP32
-);
+    BLEDevice::init("SemiSubmersible-ESP32");
 
-// ==========================================
-// 10. 模式按鈕
-// ==========================================
+    pWebServer = BLEDevice::createServer();
+    pWebServer->setCallbacks(new MyServerCallbacks());
+    BLEService *pService = pWebServer->createService(WEB_SERVICE_UUID);
 
-// 目前 ESP32 是監測版本，模式按鈕只顯示狀態。
-// 尚未傳送控制指令。
+    pWebTxCharacteristic = pService->createCharacteristic(WEB_CHAR_TX_UUID, BLECharacteristic::PROPERTY_NOTIFY);
+    pWebTxCharacteristic->addDescriptor(new BLE2902());
 
-document.getElementById("autoBtn")
-    .addEventListener("click", () => {
+    BLECharacteristic *pRxChar = pService->createCharacteristic(WEB_CHAR_RX_UUID, BLECharacteristic::PROPERTY_WRITE);
+    pRxChar->setCallbacks(new MyCallbacks());
 
-        statusVal.innerText =
-            "監測模式：自動控制尚未啟用";
+    pService->start();
+    pWebServer->getAdvertising()->start();
 
-        addLog("選擇自動模式（監測版本不執行控制）");
+    connectToRabboni();
+}
 
-    });
+// ==================== 9. Loop ====================
+void loop() {
+    if (!rabboniConnected && millis() % 5000 == 0) {
+        connectToRabboni();
+    }
 
-document.getElementById("manualBtn")
-    .addEventListener("click", () => {
+    if (systemMode == "auto" && rabboniConnected) {
+        runAutoBalanceLogic();
+    }
 
-        statusVal.innerText =
-            "監測模式：手動控制尚未啟用";
+    if (webDeviceConnected && (millis() - lastTelemetryTime >= telemetryInterval)) {
+        lastTelemetryTime = millis();
 
-        addLog("選擇手動模式（監測版本不執行控制）");
+        String telemetryStr = "pitch:" + String(currentPitch, 2) + 
+                              ",roll:" + String(currentRoll, 2) + 
+                              ",mode:" + systemMode;
 
-    });
-
-// ==========================================
-// 11. 初始狀態
-// ==========================================
-
-setConnectionStatus(
-    "尚未連線",
-    false
-);
-
-console.log(
-    "Semi-Submersible Control System Ready"
-);
-
-</script>
-
-</body>
-</html>
+        pWebTxCharacteristic->setValue(telemetryStr.c_str());
+        pWebTxCharacteristic->notify();
+    }
+    
+    delay(50);
+}
